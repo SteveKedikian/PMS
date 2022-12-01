@@ -3,21 +3,16 @@ Project Management System
 
 
 
-PROJECT FORMAT
-
-title /-/ date
+PROJECT FORMAT -       title /-/ date
 
 
 
 
-TASK FORMAT
 
-title /-/
-description /-/
-
+TASK FORMAT -         title /-/
+                      description /-/
 
 
 
-USER FORMAT
 
-name /-/ age
+USER FORMAT -         name /-/ age
