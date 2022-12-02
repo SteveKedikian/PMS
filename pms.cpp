@@ -150,8 +150,8 @@ void fill_users(std::vector<skt::User>& users) {
 
 void read_files(std::vector<skt::Project>& projects, std::vector<skt::Task>& tasks, std::vector<skt::User>& users) {
     fill_projects(projects);
-    fill_tasks(tasks);
-    fill_users(users);
+    // fill_tasks(tasks);
+    // fill_users(users);
 }
 
 void save_projects(std::vector<skt::Project>& projects) {
@@ -192,15 +192,108 @@ void save_users(std::vector<skt::User>& users) {
 
 void save_files(std::vector<skt::Project>& projects, std::vector<skt::Task>& tasks, std::vector<skt::User>& users) {
     save_projects(projects);
-    save_tasks(tasks);
-    save_users(users);
+    // save_tasks(tasks);
+    // save_users(users);
     std::cout << "\nFiles are saved, program is closed !\n";
+}
+
+bool check_update_tokens(std::string& command) { // MUST BE UPDATED !!!!
+    // int token_count = 2; // 2, because first token 'update' is already checked
+    // for (int i = 7; i < command.length(); ++i) {
+    //     if (command[i] == ' ') {
+    //         ++token_count;
+    //     }
+    // }
+
+    // if (token_count == 6) {
+    //     return true;
+    // }
+    return true;
+}
+
+bool check_update_rules(std::string& command) {
+    if (command.length() < 20) { // Line length must be pretty long
+        return false;
+    }
+    else if (command.substr(0, 6).compare("update") != 0) {
+        return false;
+    }
+    else if (!check_update_tokens(command)) {
+        return false;
+    }
+
+    return true;
+}
+
+std::string check_update_projects_action(std::string& command) { // MUST BE UPDATED !!!!
+    if (command.substr(16, 3).compare("set") != 0) {
+        std::cout << "\nWrong command for SET !\n";
+        return "0";
+    }
+    else if (command.substr(20, 6).compare("title=") == 0) {
+        return "title";
+    }
+    else if (command.substr(20, 5).compare("date=") == 0) {
+        return "date";
+    }
+    
+    return "0";
+}
+
+void update_project_title(std::vector<skt::Project>& projects, std::string& )
+void update_action_projects(std::vector<skt::Project>& projects, std::string& action, std::string& command) {
+
+
+    if ()
+}
+
+void update_action(std::vector<skt::Project>& projects, std::vector<skt::Task>& tasks, std::vector<skt::User>& users, std::string& command) {
+    if(!check_update_rules(command)) {
+        std::cout << "\nUnknown Command !\n";
+        return;
+    }
+    std::string action;
+
+    if (command.substr(7, 8).compare("projects") == 0) {
+        action = check_update_projects_action(command);
+        if (action.compare("0") == 0) {
+            std::cout << "\nWrong Command for PROJECTS !\n";
+            return;
+        }
+        update_action_projects(projects, action, command);
+    }
+    else if (command.substr(7, 5).compare("tasks") == 0) {
+        // To do
+    }
+    else if (command.substr(7, 5).compare("users") == 0) {
+        // To do
+    }
+    else {
+        std::cout << "\nWrong Command for PROJECTS / TASKS / USERS !\n";
+    }
+}
+
+void read_command(std::vector<skt::Project>& projects, std::vector<skt::Task>& tasks, std::vector<skt::User>& users, std::string& command) {
+    if (command.length() == 4 && command.compare("exit") == 0) {
+        return;
+    }
+
+    if (command[0] == 'u') { // Update Command
+        update_action(projects, tasks, users, command);
+    }
+    else {
+        std::cout << "\nUnknown Command !\n";
+    }
+    // TO DO Select
+    // TO DO Delete
+    // TO DO Else ?
 }
 
 void pms() {
     std::vector<skt::Project> projects;
     std::vector<skt::Task> tasks;
     std::vector<skt::User> users;
+    std::string command = "";
 
     read_files(projects, tasks, users);
 
@@ -215,6 +308,11 @@ void pms() {
     // for (int i = 0; i < users.size(); ++i) {
     //     users[i].info();
     // }
+
+    while (command.compare("exit") != 0) {
+        std::getline(std::cin, command);
+        read_command(projects, tasks, users, command);
+    }
 
     save_files(projects, tasks, users);
 }
