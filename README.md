@@ -1,18 +1,1 @@
-# PMS
-Project Management System
-
-
-
-PROJECT FORMAT -       title /-/ date
-
-
-
-
-
-TASK FORMAT -         title /-/
-                      description /-/
-
-
-
-
-USER FORMAT -         name /-/ age
+There is a file "readme.txt" for user options.
