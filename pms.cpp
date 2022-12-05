@@ -54,7 +54,7 @@ void fill_projects(std::vector<skt::Project>& projects) {
     int i = 0; // index
     int count;
 
-    check_projects_file();
+    check_projects_file(); // Create new .txt file, if none exist
     fin.open("projects.txt");
 
     fin >> token;
@@ -86,7 +86,7 @@ void fill_tasks(std::vector<skt::Task>& tasks) {
     int i = 0; // index
     int count;
 
-    check_tasks_file();
+    check_tasks_file(); // Create new .txt file, if none exist
     fin.open("tasks.txt");
 
     fin >> token;
@@ -123,7 +123,7 @@ void fill_users(std::vector<skt::User>& users) {
     int i = 0; // index
     int count;
 
-    check_users_file();
+    check_users_file(); // Create new .txt file, if none exist
     fin.open("users.txt");
 
     fin >> token;
@@ -150,8 +150,8 @@ void fill_users(std::vector<skt::User>& users) {
 
 void read_files(std::vector<skt::Project>& projects, std::vector<skt::Task>& tasks, std::vector<skt::User>& users) {
     fill_projects(projects);
-    // fill_tasks(tasks);
-    // fill_users(users);
+    fill_tasks(tasks);
+    fill_users(users);
 }
 
 void save_projects(std::vector<skt::Project>& projects) {
@@ -192,108 +192,303 @@ void save_users(std::vector<skt::User>& users) {
 
 void save_files(std::vector<skt::Project>& projects, std::vector<skt::Task>& tasks, std::vector<skt::User>& users) {
     save_projects(projects);
-    // save_tasks(tasks);
-    // save_users(users);
+    save_tasks(tasks);
+    save_users(users);
     std::cout << "\nFiles are saved, program is closed !\n";
 }
 
-bool check_update_tokens(std::string& command) { // MUST BE UPDATED !!!!
-    // int token_count = 2; // 2, because first token 'update' is already checked
-    // for (int i = 7; i < command.length(); ++i) {
-    //     if (command[i] == ' ') {
-    //         ++token_count;
-    //     }
-    // }
-
-    // if (token_count == 6) {
-    //     return true;
-    // }
-    return true;
-}
-
-bool check_update_rules(std::string& command) {
-    if (command.length() < 20) { // Line length must be pretty long
-        return false;
-    }
-    else if (command.substr(0, 6).compare("update") != 0) {
-        return false;
-    }
-    else if (!check_update_tokens(command)) {
-        return false;
-    }
-
-    return true;
-}
-
-std::string check_update_projects_action(std::string& command) { // MUST BE UPDATED !!!!
-    if (command.substr(16, 3).compare("set") != 0) {
-        std::cout << "\nWrong command for SET !\n";
-        return "0";
-    }
-    else if (command.substr(20, 6).compare("title=") == 0) {
-        return "title";
-    }
-    else if (command.substr(20, 5).compare("date=") == 0) {
-        return "date";
-    }
-    
-    return "0";
-}
-
-void update_project_title(std::vector<skt::Project>& projects, std::string& )
-void update_action_projects(std::vector<skt::Project>& projects, std::string& action, std::string& command) {
-
-
-    if ()
-}
-
-void update_action(std::vector<skt::Project>& projects, std::vector<skt::Task>& tasks, std::vector<skt::User>& users, std::string& command) {
-    if(!check_update_rules(command)) {
-        std::cout << "\nUnknown Command !\n";
-        return;
-    }
-    std::string action;
-
-    if (command.substr(7, 8).compare("projects") == 0) {
-        action = check_update_projects_action(command);
-        if (action.compare("0") == 0) {
-            std::cout << "\nWrong Command for PROJECTS !\n";
-            return;
+void keyword_separater(std::string *com_tokens, std::string& command, int& i, int& token_count) {
+    std::string line = "";
+    while (command[i] != '=') {
+        if (command[i] == ' ') {
+            com_tokens[token_count] = line;
+            line = "";
+            ++token_count;
+            ++i;
+            continue;
         }
-        update_action_projects(projects, action, command);
+        line += command[i];
+        ++i;
     }
-    else if (command.substr(7, 5).compare("tasks") == 0) {
-        // To do
+    com_tokens[token_count] = line;
+    token_count++;
+}
+
+void component_separator(std::string& command, int& i, std::string& component) {
+    std::string line = "";
+    while (command[i] != '"') {
+        line += command[i];
+        ++i;
     }
-    else if (command.substr(7, 5).compare("users") == 0) {
-        // To do
+    component = line;
+}
+
+void token_separator(std::string *com_tokens, std::string& command, std::string& component_1, std::string& component_2) {
+    int i = 0;
+    int token_count = 0;
+
+    keyword_separater(com_tokens, command, i, token_count);
+    i += 2; // skip ", like "hello world", starting from 'h'
+
+    component_separator(command, i, component_1);
+    i += 2; // skip to condition token
+
+    keyword_separater(com_tokens, command, i, token_count);
+    i += 2; // skip ", like "hello world", starting from 'h'
+
+    component_separator(command, i, component_2);
+}
+
+void update_project_title_by_title(std::vector<skt::Project>& projects, std::string& component_1, std::string& component_2) {
+    for (int i = 0; i < projects.size(); ++i) {
+        if (projects[i].get_title().compare(component_2) == 0) {
+            projects[i].set_title(component_1);
+        }
+    }
+}
+
+void update_project_title_by_date(std::vector<skt::Project>& projects, std::string& component_1, std::string& component_2) {
+    for (int i = 0; i < projects.size(); ++i) {
+        if (projects[i].get_date().compare(component_2) == 0) {
+            projects[i].set_title(component_1);
+        }
+    }
+}
+
+void update_project_date_by_title(std::vector<skt::Project>& projects, std::string& component_1, std::string& component_2) {
+    for (int i = 0; i < projects.size(); ++i) {
+        if (projects[i].get_title().compare(component_2) == 0) {
+            projects[i].set_date(component_1);
+        }
+    }
+}
+
+void update_project_date_by_date(std::vector<skt::Project>& projects, std::string& component_1, std::string& component_2) {
+    for (int i = 0; i < projects.size(); ++i) {
+        if (projects[i].get_date().compare(component_2) == 0) {
+            projects[i].set_date(component_1);
+        }
+    }
+}
+
+void update_project_title(std::vector<skt::Project>& projects, std::string *com_tokens, std::string& component_1, std::string& component_2) {
+    if (com_tokens[5].compare("title") == 0) {
+        update_project_title_by_title(projects, component_1, component_2);
+    }
+    else if (com_tokens[5].compare("date") == 0) {
+        update_project_title_by_date(projects, component_1, component_2);
     }
     else {
-        std::cout << "\nWrong Command for PROJECTS / TASKS / USERS !\n";
+        // other option
+    }
+}
+
+void update_project_date(std::vector<skt::Project>& projects, std::string *com_tokens, std::string& component_1, std::string& component_2) {
+    if (com_tokens[5].compare("title") == 0) {
+        update_project_date_by_title(projects, component_1, component_2);
+    }
+    else if (com_tokens[5].compare("date") == 0) {
+        update_project_date_by_date(projects, component_1, component_2);
+    }
+    else {
+        // other option
+    }
+}
+
+void update_for_projects(std::vector<skt::Project>& projects, std::string *com_tokens, std::string& component_1, std::string& component_2) {
+    if (com_tokens[3].compare("title") == 0) {
+        update_project_title(projects, com_tokens, component_1, component_2);
+    }
+    else if (com_tokens[3].compare("date") == 0) {
+        update_project_date(projects, com_tokens, component_1, component_2);
+    }
+    else {
+        // other option
+    }
+}
+
+void update_task_title_by_title(std::vector<skt::Task>& tasks, std::string& component_1, std::string& component_2) {
+    for (int i = 0; i < tasks.size(); ++i) {
+        if (tasks[i].get_title().compare(component_2) == 0) {
+            tasks[i].set_title(component_1);
+        }
+    }
+}
+
+void update_task_title_by_description(std::vector<skt::Task>& tasks, std::string& component_1, std::string& component_2) {
+    for (int i = 0; i < tasks.size(); ++i) {
+        if (tasks[i].get_desc().compare(component_2) == 0) {
+            tasks[i].set_title(component_1);
+        }
+    }
+}
+
+void update_task_description_by_title(std::vector<skt::Task>& tasks, std::string& component_1, std::string& component_2) {
+    for (int i = 0; i < tasks.size(); ++i) {
+        if (tasks[i].get_title().compare(component_2) == 0) {
+            tasks[i].set_desc(component_1);
+        }
+    }
+}
+
+void update_task_description_by_description(std::vector<skt::Task>& tasks, std::string& component_1, std::string& component_2) {
+    for (int i = 0; i < tasks.size(); ++i) {
+        if (tasks[i].get_desc().compare(component_2) == 0) {
+            tasks[i].set_desc(component_1);
+        }
+    }
+}
+
+void update_task_title(std::vector<skt::Task>& tasks, std::string *com_tokens, std::string& component_1, std::string& component_2) {
+    if (com_tokens[5].compare("title") == 0) {
+        update_task_title_by_title(tasks, component_1, component_2);
+    }
+    else if (com_tokens[5].compare("description") == 0) {
+        update_task_title_by_description(tasks, component_1, component_2);
+    }
+    else {
+        // other option
+    }
+}
+
+void update_task_description(std::vector<skt::Task>& tasks, std::string *com_tokens, std::string& component_1, std::string& component_2) {
+    if (com_tokens[5].compare("title") == 0) {
+        update_task_description_by_title(tasks, component_1, component_2);
+    }
+    else if (com_tokens[5].compare("description") == 0) {
+        update_task_description_by_description(tasks, component_1, component_2);
+    }
+    else {
+        // other option
+    }
+}
+
+void update_for_tasks(std::vector<skt::Task>& tasks, std::string *com_tokens, std::string& component_1, std::string& component_2) {
+    if (com_tokens[3].compare("title") == 0) {
+        update_task_title(tasks, com_tokens, component_1, component_2);
+    }
+    else if (com_tokens[3].compare("description") == 0) {
+        update_task_description(tasks, com_tokens, component_1, component_2);
+    }
+    else {
+        // other option
+    }
+}
+
+void update_user_name_by_name(std::vector<skt::User>& users, std::string& component_1, std::string& component_2) {
+    for (int i = 0; i < users.size(); ++i) {
+        if (users[i].get_name().compare(component_2) == 0) {
+            users[i].set_name(component_1);
+        }
+    }
+}
+
+void update_user_name_by_age(std::vector<skt::User>& users, std::string& component_1, std::string& component_2) {
+    for (int i = 0; i < users.size(); ++i) {
+        if (std::to_string(users[i].get_age()).compare(component_2) == 0) {
+            users[i].set_name(component_1);
+        }
+    }
+}
+
+void update_user_age_by_name(std::vector<skt::User>& users, std::string& component_1, std::string& component_2) {
+    for (int i = 0; i < users.size(); ++i) {
+        if (users[i].get_name().compare(component_2) == 0) {
+            users[i].set_age(std::stoi(component_1));
+        }
+    }
+}
+
+void update_user_age_by_age(std::vector<skt::User>& users, std::string& component_1, std::string& component_2) {
+    for (int i = 0; i < users.size(); ++i) {
+        if (std::to_string(users[i].get_age()).compare(component_2) == 0) {
+            users[i].set_age(std::stoi(component_1));
+        }
+    }
+}
+
+void update_user_name(std::vector<skt::User>& users, std::string *com_tokens, std::string& component_1, std::string& component_2) {
+    if (com_tokens[5].compare("name") == 0) {
+        update_user_name_by_name(users, component_1, component_2);
+    }
+    else if (com_tokens[5].compare("age") == 0) {
+        update_user_name_by_age(users, component_1, component_2);
+    }
+    else {
+        // other option
+    }
+}
+
+void update_user_age(std::vector<skt::User>& users, std::string *com_tokens, std::string& component_1, std::string& component_2) {
+    if (com_tokens[5].compare("name") == 0) {
+        update_user_age_by_name(users, component_1, component_2);
+    }
+    else if (com_tokens[5].compare("age") == 0) {
+        update_user_age_by_age(users, component_1, component_2);
+    }
+    else {
+        // other option
+    }
+}
+
+void update_for_users(std::vector<skt::User>& users, std::string *com_tokens, std::string& component_1, std::string& component_2) {
+    if (com_tokens[3].compare("name") == 0) {
+        update_user_name(users, com_tokens, component_1, component_2);
+    }
+    else if (com_tokens[3].compare("age") == 0) {
+        update_user_age(users, com_tokens, component_1, component_2);
+    }
+    else {
+        // other option
+    }
+}
+
+void update_action(std::vector<skt::Project>& projects, std::vector<skt::Task>& tasks, std::vector<skt::User>& users, std::string *com_tokens, std::string& component_1, std::string& component_2) {
+    if (com_tokens[1].compare("projects") == 0) {
+        update_for_projects(projects, com_tokens, component_1, component_2);
+    }
+    else if (com_tokens[1].compare("tasks") == 0) {
+        update_for_tasks(tasks, com_tokens, component_1, component_2);
+    }
+    else if (com_tokens[1].compare("users") == 0) {
+        update_for_users(users, com_tokens, component_1, component_2);
+    }
+    else {
+        // other option
     }
 }
 
 void read_command(std::vector<skt::Project>& projects, std::vector<skt::Task>& tasks, std::vector<skt::User>& users, std::string& command) {
-    if (command.length() == 4 && command.compare("exit") == 0) {
-        return;
-    }
+    std::string com_tokens[6];
+    std::string component_1;
+    std::string component_2;
+    token_separator(com_tokens, command, component_1, component_2);
+    
+    // std::cout << "\n_" << com_tokens[0] << "_" << com_tokens[1] << "_" << com_tokens[2] << "_" << com_tokens[3] << "_" << com_tokens[4] << "_" << com_tokens[5] << "_\n";
+    // std::cout << "_" << component_1 << "_" << component_2 << "_\n";
 
-    if (command[0] == 'u') { // Update Command
-        update_action(projects, tasks, users, command);
+    if (com_tokens[0].compare("select") == 0) {
+        // TO DO
+    }
+    else if (com_tokens[0].compare("update") == 0) {
+        update_action(projects, tasks, users, com_tokens, component_1, component_2);
+    }
+    else if (com_tokens[0].compare("create") == 0) {
+        // TO DO
+    }
+    else if (com_tokens[0].compare("delete") == 0) {
+        // TO DO
     }
     else {
-        std::cout << "\nUnknown Command !\n";
+        // other option
     }
-    // TO DO Select
-    // TO DO Delete
-    // TO DO Else ?
 }
 
 void pms() {
     std::vector<skt::Project> projects;
     std::vector<skt::Task> tasks;
     std::vector<skt::User> users;
-    std::string command = "";
+    std::string command;
 
     read_files(projects, tasks, users);
 
@@ -309,8 +504,11 @@ void pms() {
     //     users[i].info();
     // }
 
-    while (command.compare("exit") != 0) {
+    while (true) {
         std::getline(std::cin, command);
+        if (command.compare("exit") == 0) {
+            break;
+        }
         read_command(projects, tasks, users, command);
     }
 
